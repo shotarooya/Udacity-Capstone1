@@ -189,6 +189,86 @@ This project is created for educational purposes as part of the AI Mastery Capst
 
 Dataset: Public domain (U.S. Government work)
 
+## 🤔 Reflection Questions
+
+### 1. Bias Awareness: Data Cleaning and Bias
+
+**Question:** Where could poor data cleaning introduce bias into this analysis or future ML models?
+
+**Answer:**
+
+Poor data cleaning in this project could introduce several types of bias:
+
+#### Selection Bias
+- **Outlier removal:** Using town-year IQR method removes ~4% of transactions. While this eliminates obvious errors, it may disproportionately affect rapidly appreciating neighborhoods or unique luxury properties, underrepresenting these market segments
+- **Single-family focus:** Filtering only single-family homes (35% of dataset) excludes condos, multi-family properties, and commercial real estate, limiting insights about the complete housing market
+
+#### Temporal Bias
+- **Missing data patterns:** If municipalities have inconsistent reporting during economic downturns, our crisis impact analysis could be skewed
+- **Assessment lag:** Properties with outdated assessments (>5 years) may introduce systematic bias if revaluation practices differ across wealthy vs. lower-income areas
+
+#### Geographic Bias
+- **Small town representation:** Towns with few transactions (<20 per year) use global statistics in our IQR method, potentially missing local market dynamics
+- **Sample size imbalance:** Towns like Hartford (8,000+ sales) vs. small towns (100 sales) create uneven representation in regional analysis
+
+#### Assessment-Based Bias
+- **Systematic under-assessment:** Our finding that homes sell for 1.5-2x assessed value could perpetuate existing inequities if assessment practices systematically undervalue certain neighborhoods
+- **Non-market transactions:** Despite filtering ratios <0.5, family transfers and distressed sales may remain, potentially biasing price predictions downward
+
+#### Mitigation Strategies
+1. **Documentation:** Clear documentation of all filtering decisions with explicit rationale
+2. **Sensitivity analysis:** Test model performance with different outlier thresholds
+3. **Stratified validation:** Ensure models perform equitably across price ranges, towns, and time periods
+4. **Bias auditing:** Regular checks for disparate impact across demographic groups (when such data becomes available)
+
+---
+
+### 2. ML Workflow Changes
+
+**Question:** How would your workflow change if you were preparing this data for a machine learning model?
+
+**Answer:**
+
+#### Additional Data Processing Steps
+
+**Feature Engineering:**
+- **Temporal features:** Create lag features (previous year's median price by town), rolling averages (3-month, 6-month), year-over-year growth rates
+- **Geographic features:** Distance to employment centers, coastal proximity, town median income (from external sources), school district ratings
+- **Interaction features:** Town × Year, Month × Town (capture seasonal patterns by location)
+- **Derived features:** Price per square foot (if property size data available), days on market, assessment accuracy (sale/assessed ratio)
+
+**Categorical Encoding:**
+- **Town encoding:** 170 towns require careful handling:
+  - Target encoding (mean price by town) for tree-based models
+  - One-hot encoding for linear models (creates 169 dummy variables)
+  - Embeddings for neural networks (reduce to 16-32 dimensions)
+- **Temporal encoding:** Cyclical encoding for month (sin/cos transformation) to capture seasonality
+
+**Data Splitting Strategy:**
+- **Temporal split:** Critical for time series data
+  - Training: 2001-2019 (prevents data leakage)
+  - Validation: 2020-2021 (hyperparameter tuning)
+  - Test: 2022-2023 (final evaluation)
+- **Stratified sampling:** Ensure representation across:
+  - Price ranges (low, medium, high, luxury)
+  - Towns (major cities vs. small towns)
+  - Seasons (account for cyclical patterns)
+
+**Scaling and Normalization:**
+- **StandardScaler:** For linear models and neural networks
+- **Log transformation:** For right-skewed price distribution (improves model performance)
+- **Robust scaling:** For features with outliers (assessed value, sale amount)
+
+**Missing Value Strategy:**
+- **Imputation:** KNN imputation for missing property characteristics
+- **Indicator variables:** Create "missing" flags as additional features
+- **Domain-informed:** Use median imputation for numerical, mode for categorical
+
+**Class Imbalance:**
+- **Price range distribution:** If predicting price bins, handle imbalance with:
+  - SMOTE for synthetic minority samples
+  - Class weights in loss
+
 ## 🙏 Acknowledgments
 
 - Connecticut Office of Policy and Management for providing the dataset
